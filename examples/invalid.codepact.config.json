@@ -1,0 +1,10 @@
+{
+  "ranges": {
+    "ScaffoldError": [1, 99],
+    "RouterError": [200, 320],
+    "FactoryError": [300, 399],
+    "PairError": [400, 449],
+    "StakingError": [450, 499]
+  },
+  "ignore": ["code-collision", "nonexistent-rule"]
+}

@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    name: Node ${{ matrix.node }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['20.x', '22.x']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Unit tests
+        run: npm test
+
+      - name: The reference allocation validates clean, advice included
+        run: npm run check:valid
+
+      - name: The deliberately broken allocation is rejected
+        run: |
+          if npm run check:invalid --silent; then
+            echo "Expected examples/invalid.codepact.config.json to be rejected"
+            exit 1
+          fi
+
+      - name: The schema is valid JSON and matches its declared $id
+        run: |
+          node -e "
+            const fs = require('node:fs');
+            const schema = JSON.parse(fs.readFileSync('schema/codepact.config.schema.json', 'utf8'));
+            const expected = 'https://raw.githubusercontent.com/codepacct/codepact-conventions/main/schema/codepact.config.schema.json';
+            if (schema.\$id !== expected) {
+              console.error('Schema \$id does not match its published location');
+              process.exit(1);
+            }
+          "
+
+      - name: Every rule id the validator knows is offered by the schema
+        run: |
+          node -e "
+            const fs = require('node:fs');
+            const { KNOWN_RULES } = require('./src/rules.js');
+            const schema = JSON.parse(fs.readFileSync('schema/codepact.config.schema.json', 'utf8'));
+            const offered = schema.properties.ignore.items.enum;
+            const missing = KNOWN_RULES.filter((id) => !offered.includes(id));
+            const extra = offered.filter((id) => !KNOWN_RULES.includes(id));
+            if (missing.length || extra.length) {
+              console.error('Schema and validator disagree. Missing:', missing, 'Extra:', extra);
+              process.exit(1);
+            }
+          "

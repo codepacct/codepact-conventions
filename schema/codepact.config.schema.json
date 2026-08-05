@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/codepacct/codepact-conventions/main/schema/codepact.config.schema.json",
+  "title": "Codepact configuration",
+  "description": "Per-workspace error-code allocation for Soroban contracts. See SPEC.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Optional pointer to this schema, so editors validate and complete the file."
+    },
+    "ranges": {
+      "type": "object",
+      "description": "Maps a #[contracterror] enum name to the inclusive block of codes it owns.",
+      "propertyNames": {
+        "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+        "description": "A Rust enum identifier, exactly as declared."
+      },
+      "additionalProperties": {
+        "type": "array",
+        "description": "Inclusive [low, high] block. See SPEC.md rule 3.",
+        "minItems": 2,
+        "maxItems": 2,
+        "items": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4294967295
+        }
+      }
+    },
+    "ignore": {
+      "type": "array",
+      "description": "Rule ids to suppress workspace-wide. Suppressing an error-severity rule is discouraged.",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "duplicate-discriminant",
+          "code-collision",
+          "range-violation",
+          "range-overlap",
+          "implicit-discriminant"
+        ]
+      }
+    }
+  }
+}

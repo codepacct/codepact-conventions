@@ -1,0 +1,20 @@
+{
+  "name": "codepact-conventions",
+  "version": "0.1.0",
+  "description": "Error-code allocation convention for Soroban workspaces: spec, JSON Schema and validator.",
+  "license": "MIT",
+  "private": true,
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "test": "node --test test/rules.test.js",
+    "check:valid": "node bin/validate-config.js examples/valid.codepact.config.json --strict",
+    "check:invalid": "node bin/validate-config.js examples/invalid.codepact.config.json"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/codepacct/codepact-conventions.git"
+  },
+  "dependencies": {}
+}

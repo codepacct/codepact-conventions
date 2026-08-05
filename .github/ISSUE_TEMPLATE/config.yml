@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Parser or analyzer bug
+    url: https://github.com/codepacct/codepact-core/issues/new
+    about: Findings about Rust source come from codepact-core.
+  - name: CI integration problem
+    url: https://github.com/codepacct/codepact-action/issues/new
+    about: Annotations, inputs and workflow behaviour live in codepact-action.
