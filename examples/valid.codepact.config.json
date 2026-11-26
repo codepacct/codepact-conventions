@@ -2,10 +2,10 @@
   "$schema": "https://raw.githubusercontent.com/codepacct/codepact-conventions/main/schema/codepact.config.schema.json",
   "ranges": {
     "TokenError": [100, 199],
-    "RouterError": [200, 299],
-    "FactoryError": [300, 399],
-    "PairError": [400, 499],
-    "GovernanceError": [600, 699]
+    "RouterError": [300, 399],
+    "FactoryError": [500, 599],
+    "PairError": [700, 799],
+    "GovernanceError": [900, 999]
   },
   "ignore": []
 }
