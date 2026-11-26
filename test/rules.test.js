@@ -5,7 +5,7 @@ const { validateConfig, summarize } = require("../src/rules.js")
 
 const rules = (findings) => findings.map((entry) => entry.rule)
 
-test("the reference allocation from the spec validates clean", () => {
+test("the reference allocation from the spec has only gap advice", () => {
 	const findings = validateConfig({
 		ranges: {
 			TokenError: [100, 199],
@@ -14,7 +14,12 @@ test("the reference allocation from the spec validates clean", () => {
 		},
 	})
 
-	assert.deepEqual(findings, [])
+	assert.deepEqual(rules(findings), ["gapless-allocation", "gapless-allocation"])
+	assert.equal(summarize(findings).errors, 0)
+})
+
+test("well-spaced allocations validate without advice", () => {
+	assert.deepEqual(validateConfig({ ranges: { TokenError: [100, 199], RouterError: [300, 399] } }), [])
 })
 
 test("an empty configuration is valid, since ranges are optional", () => {
