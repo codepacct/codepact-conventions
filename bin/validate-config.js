@@ -19,21 +19,58 @@ const USAGE = [
 	"  -h, --help Show this message.",
 ].join("\n")
 
-function main(argv) {
+function parseArguments(argv) {
 	const args = argv.slice(2)
-
-	if (args.length === 0 || args.includes("-h") || args.includes("--help")) {
-		process.stdout.write(USAGE + "\n")
-		return args.length === 0 ? 2 : 0
+	const options = {
+		strict: false,
+		help: false,
+		targets: [],
 	}
 
-	const strict = args.includes("--strict")
-	const target = args.find((entry) => !entry.startsWith("-"))
+	for (const entry of args) {
+		switch (entry) {
+			case "-h":
+			case "--help":
+				options.help = true
+				break
+			case "--strict":
+				options.strict = true
+				break
+			default:
+				if (entry.startsWith("-")) {
+					throw new Error("Unknown option: " + entry)
+				}
+				options.targets.push(entry)
+		}
+	}
 
-	if (!target) {
-		process.stderr.write("No config file given.\n" + USAGE + "\n")
+	if (!options.help) {
+		if (options.targets.length === 0) {
+			throw new Error("No config file given.")
+		}
+		if (options.targets.length > 1) {
+			throw new Error("Expected a single config file, got: " + options.targets.slice(1).join(", "))
+		}
+	}
+
+	return options
+}
+
+function main(argv) {
+	let options
+	try {
+		options = parseArguments(argv)
+	} catch (error) {
+		process.stderr.write("validate-config: " + error.message + "\n" + USAGE + "\n")
 		return 2
 	}
+
+	if (options.help) {
+		process.stdout.write(USAGE + "\n")
+		return 0
+	}
+
+	const target = options.targets[0]
 
 	let parsed
 	try {
@@ -60,7 +97,7 @@ function main(argv) {
 		"\n" + counts.errors + " error(s), " + counts.advice + " advisory note(s).\n",
 	)
 
-	return counts.errors > 0 || (strict && counts.advice > 0) ? 1 : 0
+	return counts.errors > 0 || (options.strict && counts.advice > 0) ? 1 : 0
 }
 
 process.exitCode = main(process.argv)
