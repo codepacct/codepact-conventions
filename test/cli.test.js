@@ -1,6 +1,6 @@
 const test = require("node:test")
 const assert = require("node:assert/strict")
-const { mkdtempSync, rmSync, writeFileSync } = require("node:fs")
+const { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } = require("node:fs")
 const { tmpdir } = require("node:os")
 const { join } = require("node:path")
 const { spawnSync } = require("node:child_process")
@@ -65,6 +65,71 @@ test("valid config exits 0, advice exits 0 without --strict and 1 with --strict"
 		assert.equal(strict.status, 1, strict.stderr)
 		assert.match(strict.stdout, /0 error\(s\), 1 advisory note\(s\)/)
 	} finally {
+		rmSync(dir, { recursive: true, force: true })
+	}
+})
+
+test("--json returns findings and a summary", () => {
+	const dir = mkdtempSync(join(tmpdir(), "codepact-conv-json-"))
+	try {
+		const file = join(dir, "config.json")
+		writeFileSync(file, JSON.stringify({ ranges: { TokenError: [10, 199] } }))
+		const result = runCli([file, "--json"])
+		assert.equal(result.status, 1, result.stderr)
+		const report = JSON.parse(result.stdout)
+		assert.equal(report.file, file)
+		assert.equal(report.summary.errors, 1)
+		assert.equal(report.findings[0].rule, "reserved-range")
+	} finally {
+		rmSync(dir, { recursive: true, force: true })
+	}
+})
+
+test("--init writes a starter config and refuses to overwrite it", () => {
+	const dir = mkdtempSync(join(tmpdir(), "codepact-conv-init-"))
+	const previous = process.cwd()
+	try {
+		const contracts = join(dir, "contracts")
+		mkdirSync(contracts)
+		writeFileSync(
+			join(contracts, "token.rs"),
+			"#[contracterror]\npub enum TokenError { NotInit = 100 }\n",
+		)
+		writeFileSync(
+			join(contracts, "router.rs"),
+			"// #[contracterror]\n#[soroban_sdk::contracterror]\npub enum RouterError { Bad = 200 }\n",
+		)
+		process.chdir(dir)
+		const first = runCli(["--init", contracts, "--json"])
+		assert.equal(first.status, 0, first.stderr)
+		const report = JSON.parse(first.stdout)
+		assert.deepEqual(report.enums, ["RouterError", "TokenError"])
+		assert.deepEqual(report.ranges.RouterError, [100, 199])
+		assert.deepEqual(report.ranges.TokenError, [210, 309])
+		assert.ok(existsSync(join(dir, "codepact.config.json")))
+
+		const config = JSON.parse(readFileSync(join(dir, "codepact.config.json"), "utf8"))
+		assert.deepEqual(Object.keys(config.ranges), ["RouterError", "TokenError"])
+
+		const second = runCli(["--init", contracts])
+		assert.equal(second.status, 2)
+		assert.match(second.stderr, /Refusing to overwrite/)
+	} finally {
+		process.chdir(previous)
+		rmSync(dir, { recursive: true, force: true })
+	}
+})
+
+test("--init reports a directory with no error enums", () => {
+	const dir = mkdtempSync(join(tmpdir(), "codepact-conv-empty-"))
+	const previous = process.cwd()
+	try {
+		process.chdir(dir)
+		const result = runCli(["--init", dir])
+		assert.equal(result.status, 2)
+		assert.match(result.stderr, /No #\[contracterror\] enums found/)
+	} finally {
+		process.chdir(previous)
 		rmSync(dir, { recursive: true, force: true })
 	}
 })
