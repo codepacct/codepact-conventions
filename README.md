@@ -46,6 +46,8 @@ node bin/validate-config.js --help
 
 Pass exactly one config file path, optionally with `--strict` (treat advisory notes as failures) or `-h` / `--help`. Unknown flags, missing paths, extra positional arguments, unreadable files, and malformed JSON exit with code `2`.
 
+See [`examples/README.md`](examples/README.md) for documented configurations covering valid spaced allocations, overlapping blocks, and adjacent blocks with no growth gap, and run `npm test` to exercise every example offline against both the local JSON Schema and the validator.
+
 A JSON Schema can say a block is two integers. It cannot say that two blocks
 overlap, that a block sits in the reserved `0-99` range, or that you allocated
 `[100,149]` and `[150,199]` back to back and left the first contract nowhere to

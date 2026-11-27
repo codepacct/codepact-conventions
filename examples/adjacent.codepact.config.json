@@ -1,0 +1,9 @@
+{
+  "$schema": "../schema/codepact.config.schema.json",
+  "ranges": {
+    "TokenError": [100, 149],
+    "RouterError": [150, 199],
+    "FactoryError": [300, 399]
+  },
+  "ignore": []
+}
