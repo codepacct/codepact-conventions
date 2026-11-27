@@ -2,17 +2,24 @@
   <img src="https://raw.githubusercontent.com/codepacct/codepact-core/main/assets/codepact-banner.svg" alt="Codepact" width="860">
 </p>
 
+<p align="center">
+  <a href="https://github.com/codepacct/codepact-conventions/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/codepacct/codepact-conventions/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
+  <img alt="Node 20 or newer" src="https://img.shields.io/badge/node-%3E%3D20-brightgreen">
+</p>
+
 # Codepact Conventions
 
 The written convention behind the tooling: how a Soroban workspace should
 allocate error codes so that collisions are structurally impossible instead of
 caught by luck.
 
-- **[SPEC.md](SPEC.md)** — seven rules, with the reasoning for each.
-- **[schema/codepact.config.schema.json](schema/codepact.config.schema.json)** —
+- **[SPEC.md](SPEC.md)**: seven rules, with the reasoning for each.
+- **[schema/codepact.config.schema.json](schema/codepact.config.schema.json)**:
   JSON Schema for `codepact.config.json`, so your editor completes and validates
   it as you type.
-- **`bin/validate-config.js`** — checks the things a schema cannot express.
+- **`bin/validate-config.js`**: checks the things a schema cannot express.
+- **`docs/EXAMPLES.md`**: worked allocations for common workspace shapes.
 
 ## Why a separate repository
 
@@ -37,14 +44,32 @@ Add one line to your config and your editor will validate it:
 }
 ```
 
+## Generate a starter config
+
+If you already have `#[contracterror]` enums, the validator can produce a first
+allocation for you:
+
+```bash
+node bin/validate-config.js --init contracts/
+```
+
+This scans `.rs` files under the directory, finds bare and qualified
+`#[contracterror]` attributes, and writes `codepact.config.json` in the current
+directory. Blocks are 100 codes wide with a 10 code gap, starting at 100. The
+command refuses to overwrite an existing config. Review the result before
+committing it: only a human knows which contract should own which block.
+
 ## Validate the allocation itself
 
 ```bash
-node bin/validate-config.js codepact.config.json [--strict]
+node bin/validate-config.js codepact.config.json [--strict] [--json]
 node bin/validate-config.js --help
 ```
 
-Pass exactly one config file path, optionally with `--strict` (treat advisory notes as failures) or `-h` / `--help`. Unknown flags, missing paths, extra positional arguments, unreadable files, and malformed JSON exit with code `2`.
+Pass exactly one config file path, optionally with `--strict` (treat advisory
+notes as failures), `--json` (machine readable output), or `-h` / `--help`.
+Unknown flags, missing paths, extra positional arguments, unreadable files, and
+malformed JSON exit with code `2`.
 
 A JSON Schema can say a block is two integers. It cannot say that two blocks
 overlap, that a block sits in the reserved `0-99` range, or that you allocated
@@ -52,7 +77,7 @@ overlap, that a block sits in the reserved `0-99` range, or that you allocated
 grow. Those are the mistakes that cause a collision six months later, so they
 are checked here.
 
-```
+```text
 error: reserved-range [SPEC rule 2]
   ScaffoldError begins at 1, inside the reserved 0-99 block.
 error: block-overlap [SPEC rule 4]
@@ -62,6 +87,24 @@ advice: gapless-allocation [SPEC rule 5]
 ```
 
 Exit codes: `0` clean, `1` findings, `2` could not run.
+
+## JSON output
+
+```bash
+node bin/validate-config.js codepact.config.json --json
+```
+
+```json
+{
+  "file": "codepact.config.json",
+  "findings": [],
+  "summary": { "errors": 0, "advice": 0 },
+  "strict": false
+}
+```
+
+This is intended for a CI step that wants to render its own report. The exit
+code is still the source of truth.
 
 ## The rule no tool can enforce
 
@@ -75,14 +118,28 @@ a silent semantic change into a visible diff in review.
 
 ## Related
 
-- [`codepact-core`](https://github.com/codepacct/codepact-core) — the analyzer.
-- [`codepact-action`](https://github.com/codepacct/codepact-action) — enforcement
+- [`codepact-core`](https://github.com/codepacct/codepact-core): the analyzer.
+- [`codepact-action`](https://github.com/codepacct/codepact-action): enforcement
   in CI, annotated on the diff.
+
+## Status
+
+The spec is at `0.2.0` and remains a draft. The schema, validator, JSON output
+and starter config generator are usable today. The next milestone is a check
+that compares a config against the enums that actually exist.
+
+See [`ROADMAP.md`](ROADMAP.md) and the [open issues](https://github.com/codepacct/codepact-conventions/issues).
 
 ## Contributing
 
-The spec is a draft and disagreement is useful — particularly on the reserved
+The spec is a draft and disagreement is useful, particularly on the reserved
 range and the reference allocation. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+Every change lands through a pull request, including the maintainer's own.
+
+This repository participates in Stellar Wave. Issues added to the program carry
+the Wave label, and each issue states its scope, acceptance criteria and
+verification command.
 
 ## License
 
