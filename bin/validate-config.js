@@ -3,7 +3,7 @@
 /**
  * Validate a codepact.config.json against SPEC.md.
  *
- *   node bin/validate-config.js path/to/codepact.config.json [--strict]
+ *   node bin/validate-config.js path/to/codepact.config.json [--strict] [--json]
  *
  * Exit codes: 0 clean, 1 findings, 2 could not run.
  */
@@ -13,9 +13,10 @@ const fs = require("node:fs")
 const { validateConfig, summarize } = require("../src/rules.js")
 
 const USAGE = [
-	"Usage: validate-config <config.json> [--strict]",
+	"Usage: validate-config <config.json> [--strict] [--json]",
 	"",
 	"  --strict   Treat advice as failure.",
+	"  --json     Emit machine readable JSON instead of text.",
 	"  -h, --help Show this message.",
 ].join("\n")
 
@@ -23,6 +24,7 @@ function parseArguments(argv) {
 	const args = argv.slice(2)
 	const options = {
 		strict: false,
+		json: false,
 		help: false,
 		targets: [],
 	}
@@ -35,6 +37,9 @@ function parseArguments(argv) {
 				break
 			case "--strict":
 				options.strict = true
+				break
+			case "--json":
+				options.json = true
 				break
 			default:
 				if (entry.startsWith("-")) {
@@ -82,6 +87,26 @@ function main(argv) {
 
 	const findings = validateConfig(parsed)
 	const counts = summarize(findings)
+	const failed = counts.errors > 0 || (options.strict && counts.advice > 0)
+
+	if (options.json) {
+		process.stdout.write(
+			JSON.stringify(
+				{
+					valid: !failed,
+					strict: options.strict,
+					summary: {
+						errors: counts.errors,
+						advice: counts.advice,
+					},
+					findings,
+				},
+				null,
+				2,
+			) + "\n",
+		)
+		return failed ? 1 : 0
+	}
 
 	for (const entry of findings) {
 		const spec = entry.spec === "-" ? "" : " [SPEC rule " + entry.spec + "]"
@@ -97,7 +122,7 @@ function main(argv) {
 		"\n" + counts.errors + " error(s), " + counts.advice + " advisory note(s).\n",
 	)
 
-	return counts.errors > 0 || (options.strict && counts.advice > 0) ? 1 : 0
+	return failed ? 1 : 0
 }
 
 process.exitCode = main(process.argv)

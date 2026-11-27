@@ -40,11 +40,11 @@ Add one line to your config and your editor will validate it:
 ## Validate the allocation itself
 
 ```bash
-node bin/validate-config.js codepact.config.json [--strict]
+node bin/validate-config.js codepact.config.json [--strict] [--json]
 node bin/validate-config.js --help
 ```
 
-Pass exactly one config file path, optionally with `--strict` (treat advisory notes as failures) or `-h` / `--help`. Unknown flags, missing paths, extra positional arguments, unreadable files, and malformed JSON exit with code `2`.
+Pass exactly one config file path, optionally with `--strict` (treat advisory notes as failures), `--json` (emit structured JSON for CI and tooling), or `-h` / `--help`. Unknown flags, missing paths, extra positional arguments, unreadable files, and malformed JSON exit with code `2`.
 
 A JSON Schema can say a block is two integers. It cannot say that two blocks
 overlap, that a block sits in the reserved `0-99` range, or that you allocated
