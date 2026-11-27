@@ -8,7 +8,7 @@
     "node": ">=20.0.0"
   },
   "scripts": {
-    "test": "node --test test/rules.test.js test/cli.test.js",
+    "test": "node --test test/rules.test.js test/cli.test.js test/examples.test.js",
     "check:valid": "node bin/validate-config.js examples/valid.codepact.config.json --strict",
     "check:invalid": "node bin/validate-config.js examples/invalid.codepact.config.json"
   },
